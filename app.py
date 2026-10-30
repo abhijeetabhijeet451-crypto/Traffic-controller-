@@ -7,7 +7,6 @@ import time
 
 st.set_page_config(page_title="AI Smart Traffic Controller", layout="wide")
 
-# Session state for navigation
 if 'page' not in st.session_state:
     st.session_state.page = 'welcome'
 
@@ -17,58 +16,63 @@ def load_model():
 
 model = load_model()
 
-# 1. Welcome / Starting Page
 if st.session_state.page == 'welcome':
-    st.markdown("<h1 style='text-align: center; color: #ff4b4b;'>🚦 AI-Powered Next-Gen Traffic Management System</h1>", unsafe_allow_html=True)
-    st.markdown("<h3 style='text-align: center; color: gray;'>Smart Traffic Density Optimization & Emergency Corridor System</h3>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align: center; color: #ff4b4b;'>AI-Powered Next-Gen Traffic Management System</h1>", unsafe_allow_html=True)
+    st.markdown("<h3 style='text-align: center; color: gray;'>Smart Traffic Density Optimization and Emergency Corridor System</h3>", unsafe_allow_html=True)
     
     st.write("")
     st.write("")
     
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-        st.info("👋 Welcome to the Hackathon Project! Click the button below to start the live traffic simulation.")
-        if st.button("🚀 Start Traffic Simulation", use_container_width=True):
+        st.info("Welcome to the Hackathon Project. Click the button below to start the live traffic simulation")
+        if st.button("Start Traffic Simulation", use_container_width=True):
             st.session_state.page = 'simulation'
             st.rerun()
 
-# 2. Main Simulation Page
 elif st.session_state.page == 'simulation':
-    if st.button("⬅️ Back to Home"):
+    if st.button("Back to Home"):
         st.session_state.page = 'welcome'
         st.rerun()
 
-    st.title("🚦 AI Smart Traffic Controller - Live Dashboard")
+    st.title("AI Smart Traffic Controller - Live Dashboard")
     st.caption("Vehicle Density Optimization | Emergency Vehicle Detection | Stray Animal Protection")
 
-    st.sidebar.header("🛠️ Simulation Controls")
+    st.sidebar.header("Simulation Controls")
     video_source = st.sidebar.file_uploader("Upload Traffic Video Clip", type=["mp4", "avi", "mov"])
 
     col1, col2 = st.columns([2, 1])
 
     with col1:
-        st.subheader("📹 Live Video Feed & AI Bounding Boxes")
+        st.subheader("Live Video Feed and AI Bounding Boxes")
         video_placeholder = st.empty()
 
     with col2:
-        st.subheader("🚥 Real-Time Signal Analytics")
+        st.subheader("Real-Time Signal Analytics")
         status_card = st.empty()
         timer_card = st.empty()
         stats_card = st.empty()
 
-    VEHICLE_CLASSES = [2, 3, 5, 7]  # Car, Motorcycle, Bus, Truck
-    EMERGENCY_CLASSES = [7]          # Truck (Emergency vehicle simulation)
-    ANIMAL_CLASSES = [15, 16, 17, 18, 19, 20]  # Cat, Dog, Horse, Sheep, Cow, Elephant
+    VEHICLE_CLASSES = [2, 3, 5, 7]
+    EMERGENCY_CLASSES = [7]
+    ANIMAL_CLASSES = [15, 16, 17, 18, 19, 20]
 
     if video_source is not None:
         tfile = tempfile.NamedTemporaryFile(delete=False)
         tfile.write(video_source.read())
         cap = cv2.VideoCapture(tfile.name)
 
+        frame_skip = 2
+        frame_count = 0
+
         while cap.isOpened():
             ret, frame = cap.read()
             if not ret:
                 break
+
+            frame_count += 1
+            if frame_count % frame_skip != 0:
+                continue
 
             results = model(frame, verbose=False)
             boxes = results[0].boxes
@@ -89,24 +93,24 @@ elif st.session_state.page == 'simulation':
             annotated_file = results[0].plot()
 
             if emergency_detected:
-                signal = "🟢 GREEN (EMERGENCY CORRIDOR OVERRIDE)"
+                signal = "GREEN (EMERGENCY CORRIDOR OVERRIDE)"
                 color = "#28a745"
-                advice = "Emergency Vehicle Detected! Green corridor opened automatically."
+                advice = "Emergency Vehicle Detected. Green corridor opened automatically"
                 allocated_time = 60
             elif animal_detected:
-                signal = "🟡 YELLOW (ANIMAL CAUTION HAZARD)"
+                signal = "YELLOW (ANIMAL CAUTION HAZARD)"
                 color = "#ffc107"
-                advice = "Stray Animal (Cow/Dog) Detected on Road! Hazard Alert Active."
+                advice = "Stray Animal Detected on Road. Hazard Alert Active"
                 allocated_time = 15
             elif vehicle_count > 4:
-                signal = "🟢 GREEN (HIGH DENSITY)"
+                signal = "GREEN (HIGH DENSITY)"
                 color = "#28a745"
-                advice = "Heavy Traffic Cleared Dynamically."
+                advice = "Heavy Traffic Cleared Dynamically"
                 allocated_time = min(20 + (vehicle_count * 3), 60)
             else:
-                signal = "🔴 RED (LOW TRAFFIC / STANDARD)"
+                signal = "RED (LOW TRAFFIC / STANDARD)"
                 color = "#dc3545"
-                advice = "Standard Interval Active."
+                advice = "Standard Interval Active"
                 allocated_time = 15
 
             video_placeholder.image(cv2.cvtColor(annotated_file, cv2.COLOR_BGR2RGB), channels="RGB", use_container_width=True)
@@ -123,6 +127,5 @@ elif st.session_state.page == 'simulation':
 
             timer_card.metric(label="Calculated Signal Timer", value=f"{allocated_time}s")
             stats_card.write(f"**Vehicles:** {vehicle_count} | **Emergency:** {'Yes 🚨' if emergency_detected else 'None'} | **Animal:** {'Yes ⚠️' if animal_detected else 'None'}")
-            time.sleep(0.03)
 
         cap.release()
