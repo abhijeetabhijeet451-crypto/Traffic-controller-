@@ -61,6 +61,19 @@ elif st.session_state.page == 'simulation':
         tfile.write(video_source.read())
         cap = cv2.VideoCapture(tfile.name)
 
+        width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)) or 640
+        height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)) or 360
+        fps = int(cap.get(cv2.CAP_PROP_FPS)) or 20
+
+        # Save processed frames to a playable output video
+        output_file = tempfile.NamedTemporaryFile(delete=False, suffix='.mp4')
+        fourcc = cv2.VideoWriter_fourcc(*'avc1')
+        out = cv2.VideoWriter(output_file.name, fourcc, fps, (width, height))
+
+        if not out.isOpened():
+            fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+            out = cv2.VideoWriter(output_file.name, fourcc, fps, (width, height))
+
         vehicle_count = 0
         emergency_detected = False
         animal_detected = False
@@ -72,7 +85,7 @@ elif st.session_state.page == 'simulation':
                 break
             
             frame_count += 1
-            if frame_count % 5 != 0:
+            if frame_count % 3 != 0:
                 continue
 
             results = model(frame, verbose=False)
@@ -92,9 +105,13 @@ elif st.session_state.page == 'simulation':
                 vehicle_count = current_vehicles
 
             annotated_frame = results[0].plot()
-            video_placeholder.image(cv2.cvtColor(annotated_frame, cv2.COLOR_BGR2RGB), channels="RGB", use_container_width=True)
+            out.write(annotated_frame)
 
         cap.release()
+        out.release()
+
+        # Play smooth processed video natively
+        video_placeholder.video(output_file.name)
 
         if emergency_detected:
             signal = "GREEN (EMERGENCY CORRIDOR OVERRIDE)"
