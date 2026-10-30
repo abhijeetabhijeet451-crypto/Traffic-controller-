@@ -61,14 +61,6 @@ elif st.session_state.page == 'simulation':
         tfile.write(video_source.read())
         cap = cv2.VideoCapture(tfile.name)
 
-        width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)) or 640
-        height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)) or 360
-        fps = int(cap.get(cv2.CAP_PROP_FPS)) or 20
-
-        out_file = tempfile.NamedTemporaryFile(delete=False, suffix='.mp4')
-        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-        out = cv2.VideoWriter(out_file.name, fourcc, fps, (width, height))
-
         vehicle_count = 0
         emergency_detected = False
         animal_detected = False
@@ -80,28 +72,29 @@ elif st.session_state.page == 'simulation':
                 break
             
             frame_count += 1
-            if frame_count % 3 != 0:
+            if frame_count % 5 != 0:
                 continue
 
             results = model(frame, verbose=False)
             boxes = results[0].boxes
 
+            current_vehicles = 0
             for box in boxes:
                 cls = int(box.cls[0])
                 if cls in VEHICLE_CLASSES:
-                    vehicle_count += 1
+                    current_vehicles += 1
                 if cls in EMERGENCY_CLASSES:
                     emergency_detected = True
                 if cls in ANIMAL_CLASSES:
                     animal_detected = True
+            
+            if current_vehicles > vehicle_count:
+                vehicle_count = current_vehicles
 
             annotated_frame = results[0].plot()
-            out.write(annotated_frame)
+            video_placeholder.image(cv2.cvtColor(annotated_frame, cv2.COLOR_BGR2RGB), channels="RGB", use_container_width=True)
 
         cap.release()
-        out.release()
-
-        video_placeholder.video(out_file.name)
 
         if emergency_detected:
             signal = "GREEN (EMERGENCY CORRIDOR OVERRIDE)"
