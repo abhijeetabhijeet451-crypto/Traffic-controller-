@@ -42,6 +42,8 @@ if video_source is not None:
 
     while cap.isOpened():
         ret, frame = cap.read()
+        # Frame ka size chota karke fast karna
+frame = cv2.resize(frame, (640, 360))
         if not ret:
             break
 
