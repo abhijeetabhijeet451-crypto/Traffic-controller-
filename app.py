@@ -3,6 +3,7 @@ import cv2
 import numpy as np
 from ultralytics import YOLO
 import tempfile
+import time
 
 st.set_page_config(page_title="AI Smart Traffic Controller", layout="wide")
 
@@ -61,13 +62,20 @@ elif st.session_state.page == 'simulation':
         tfile.write(video_source.read())
         cap = cv2.VideoCapture(tfile.name)
 
+        frame_count = 0
+        skip_rate = 5  # 5 guna fast processing
+
         while cap.isOpened():
             ret, frame = cap.read()
             if not ret:
                 break
             
-            frame = cv2.resize(frame, (640, 360))
-            results = model(frame, verbose=False)
+            frame_count += 1
+            if frame_count % skip_rate != 0:
+                continue
+
+            frame = cv2.resize(frame, (480, 270))
+            results = model(frame, verbose=False, imgsz=320)
             boxes = results[0].boxes
 
             vehicle_count = 0
@@ -90,7 +98,7 @@ elif st.session_state.page == 'simulation':
                 color = "#28a745"
                 advice = "Emergency Vehicle Detected! Green corridor opened automatically."
                 allocated_time = 60
-            elif animal_dict := animal_detected:
+            elif animal_detected:
                 signal = "🟡 YELLOW (ANIMAL CAUTION HAZARD)"
                 color = "#ffc107"
                 advice = "Stray Animal (Cow/Dog) Detected on Road! Hazard Alert Active."
