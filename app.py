@@ -101,3 +101,4 @@ if video_source is not None:
         time.sleep(0.03)
 
     cap.release()
+    
