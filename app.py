@@ -100,6 +100,5 @@ frame = cv2.resize(frame, (640, 360))
 
         timer_card.metric(label="Calculated Signal Timer", value=f"{allocated_time}s")
         stats_card.write(f"**Vehicles:** {vehicle_count} | **Emergency:** {'Yes 🚨' if emergency_detected else 'None'} | **Animal:** {'Yes ⚠️' if animal_detected else 'None'}")
-        time.sleep(0.03)
 
     cap.release()
