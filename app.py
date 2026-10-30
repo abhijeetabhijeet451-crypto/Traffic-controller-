@@ -3,7 +3,6 @@ import cv2
 import numpy as np
 from ultralytics import YOLO
 import tempfile
-import time
 
 st.set_page_config(page_title="AI Smart Traffic Controller", layout="wide")
 
@@ -44,7 +43,7 @@ elif st.session_state.page == 'simulation':
     col1, col2 = st.columns([2, 1])
 
     with col1:
-        st.subheader("Live Video Feed and AI Bounding Boxes")
+        st.subheader("Processed Traffic Video Feed")
         video_placeholder = st.empty()
 
     with col2:
@@ -58,45 +57,57 @@ elif st.session_state.page == 'simulation':
     ANIMAL_CLASSES = [15, 16, 17, 18, 19, 20]
 
     if video_source is not None:
-        tfile = tempfile.NamedTemporaryFile(delete=False, suffix='.mp4')
-        tfile.write(video_source.read())
-        cap = cv2.VideoCapture(tfile.name)
+        with st.spinner("Processing video through YOLO AI Model... Please wait."):
+            tfile = tempfile.NamedTemporaryFile(delete=False, suffix='.mp4')
+            tfile.write(video_source.read())
+            cap = cv2.VideoCapture(tfile.name)
 
-        vehicle_count = 0
-        emergency_detected = False
-        animal_detected = False
-        frame_count = 0
+            width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)) or 640
+            height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)) or 360
+            fps = int(cap.get(cv2.CAP_PROP_FPS)) or 20
 
-        while cap.isOpened():
-            ret, frame = cap.read()
-            if not ret:
-                break
-            
-            frame_count += 1
-            if frame_count % 4 != 0:
-                continue
+            output_file = tempfile.NamedTemporaryFile(delete=False, suffix='.mp4')
+            fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+            out = cv2.VideoWriter(output_file.name, fourcc, fps, (width, height))
 
-            frame = cv2.resize(frame, (640, 360))
-            results = model(frame, verbose=False)
-            boxes = results[0].boxes
+            vehicle_count = 0
+            emergency_detected = False
+            animal_detected = False
+            frame_count = 0
 
-            current_vehicles = 0
-            for box in boxes:
-                cls = int(box.cls[0])
-                if cls in VEHICLE_CLASSES:
-                    current_vehicles += 1
-                if cls in EMERGENCY_CLASSES:
-                    emergency_detected = True
-                if cls in ANIMAL_CLASSES:
-                    animal_detected = True
-            
-            if current_vehicles > vehicle_count:
-                vehicle_count = current_vehicles
+            while cap.isOpened():
+                ret, frame = cap.read()
+                if not ret:
+                    break
+                
+                frame_count += 1
+                if frame_count % 3 != 0:
+                    continue
 
-            annotated_frame = results[0].plot()
-            video_placeholder.image(cv2.cvtColor(annotated_frame, cv2.COLOR_BGR2RGB), channels="RGB", use_container_width=True)
+                results = model(frame, verbose=False)
+                boxes = results[0].boxes
 
-        cap.release()
+                current_vehicles = 0
+                for box in boxes:
+                    cls = int(box.cls[0])
+                    if cls in VEHICLE_CLASSES:
+                        current_vehicles += 1
+                    if cls in EMERGENCY_CLASSES:
+                        emergency_detected = True
+                    if cls in ANIMAL_CLASSES:
+                        animal_detected = True
+                
+                if current_vehicles > vehicle_count:
+                    vehicle_count = current_vehicles
+
+                annotated_frame = results[0].plot()
+                out.write(annotated_frame)
+
+            cap.release()
+            out.release()
+
+        # Smooth native video player (No lag, plays/pauses normally)
+        video_placeholder.video(output_file.name)
 
         if emergency_detected:
             signal = "GREEN (EMERGENCY CORRIDOR OVERRIDE)"
