@@ -20,7 +20,7 @@ if st.session_state.page == "Welcome":
     
     st.divider()
     
-    # Screen par direct button (bina emoji ke)
+    # Screen par direct button
     if st.button("Test Prototype", type="primary", use_container_width=True):
         st.session_state.page = "Test Prototype"
         st.rerun()
@@ -91,23 +91,36 @@ elif st.session_state.page == "Test Prototype":
             if emergency_detected:
                 signal = "GREEN: EMERGENCY CORRIDOR OVERRIDE"
                 advice = "Emergency vehicle detected. Corridor cleared."
+                color = "#28a745"
                 allocated_time = 60
             elif animal_detected:
                 signal = "YELLOW: ANIMAL HAZARD CAUTION"
                 advice = "Stray animal detected on road."
+                color = "#ffc107"
                 allocated_time = 15
             elif vehicle_count > 4:
                 signal = "GREEN: HIGH DENSITY TRAFFIC"
                 advice = "Dynamic timing active for high traffic."
+                color = "#28a745"
                 allocated_time = min(20 + (vehicle_count * 3), 60)
             else:
                 signal = "RED: STANDARD INTERVAL"
                 advice = "Low traffic density."
+                color = "#dc3545"
                 allocated_time = 15
 
             video_placeholder.image(cv2.cvtColor(annotated_file, cv2.COLOR_BGR2RGB), channels="RGB", use_container_width=True)
 
-            status_card.info(f"**Status:** {signal}\n\n**Action:** {advice}")
+            status_card.markdown(
+                f"""
+                <div style="background-color: {color}; padding: 15px; border-radius: 8px; color: black; font-weight: bold; text-align: center; font-size: 16px;">
+                    {signal}
+                </div>
+                <p style="margin-top: 8px; font-weight: bold;">Action: {advice}</p>
+                """,
+                unsafe_allow_html=True
+            )
+
             timer_card.metric(label="Signal Timer", value=f"{allocated_time}s")
             stats_card.write(f"Vehicles: {vehicle_count} | Emergency: {'Yes' if emergency_detected else 'No'} | Animal: {'Yes' if animal_detected else 'No'}")
             time.sleep(0.03)
