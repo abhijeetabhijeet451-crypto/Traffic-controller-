@@ -20,8 +20,8 @@ if st.session_state.page == "Welcome":
     
     st.divider()
     
-    # Screen par direct button
-    if st.button("👉 Test Prototype", type="primary", use_container_width=True):
+    # Screen par direct button (bina emoji ke)
+    if st.button("Test Prototype", type="primary", use_container_width=True):
         st.session_state.page = "Test Prototype"
         st.rerun()
 
