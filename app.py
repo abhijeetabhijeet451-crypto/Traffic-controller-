@@ -9,44 +9,24 @@ st.set_page_config(page_title="AI Smart Traffic Controller", layout="wide", page
 
 # --- Sidebar Navigation ---
 st.sidebar.title("Navigation")
-page = st.sidebar.radio("Go to:", ["Welcome Page", "Live Simulation"])
+page = st.sidebar.radio("Go to:", ["Welcome", "Test Prototype"])
 
 # ==========================================
-# PAGE 1: NORMAL WELCOME PAGE
+# PAGE 1: SIMPLE WELCOME PAGE
 # ==========================================
-if page == "Welcome Page":
-    st.title("🚦 AI-Powered Smart Traffic Controller")
-    st.write("An Intelligent Real-Time Traffic Density Management & Emergency Vehicle Priority System")
+if page == "Welcome":
+    st.title("🚦 AI Smart Traffic Controller")
+    st.write("Real-time traffic density optimization and emergency vehicle detection prototype using YOLOv8.")
     
     st.divider()
-
-    st.header("Project Overview")
-    st.write(
-        "This prototype uses computer vision and deep learning (YOLOv8) to analyze traffic video feeds "
-        "in real-time. It automatically optimizes traffic signal durations based on vehicle density, "
-        "detects emergency vehicles for priority green corridors, and flags stray animal hazards on the road."
-    )
-
-    st.header("Key Features")
-    st.markdown("- **Dynamic Signal Timing:** Automatically calculates green light duration based on vehicle count.")
-    st.markdown("- **Emergency Vehicle Override:** Detects ambulances and fire trucks to trigger a 60-second green corridor.")
-    st.markdown("- **Stray Animal Detection:** Identifies cows, dogs, or other animals to alert authorities of road hazards.")
-
-    st.header("Tech Stack")
-    col1, col2, col3, col4 = st.columns(4)
-    col1.metric("Model", "YOLOv8 Nano")
-    col2.metric("Processing", "OpenCV")
-    col3.metric("Framework", "Streamlit")
-    col4.metric("Dataset", "COCO")
-
-    st.info("To test the system, select 'Live Simulation' from the sidebar menu and upload a traffic video clip.")
+    
+    st.info("👉 Click on **'Test Prototype'** in the sidebar to upload a video and run the live simulation.")
 
 # ==========================================
-# PAGE 2: LIVE SIMULATION
+# PAGE 2: TEST PROTOTYPE (LIVE SIMULATION)
 # ==========================================
-elif page == "Live Simulation":
-    st.title("Live Traffic Simulation & Analytics")
-    st.write("Upload a traffic video clip to run object detection and view real-time signal logic.")
+elif page == "Test Prototype":
+    st.title("Test Prototype - Live Traffic Simulation")
 
     @st.cache_resource
     def load_model():
