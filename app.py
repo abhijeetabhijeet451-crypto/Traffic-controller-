@@ -7,25 +7,32 @@ import time
 
 st.set_page_config(page_title="AI Smart Traffic Controller", layout="wide", page_icon="🚦")
 
-# --- Sidebar Navigation ---
-st.sidebar.title("Navigation")
-page = st.sidebar.radio("Go to:", ["Welcome", "Test Prototype"])
+# Session state initialize karna page navigation ke liye
+if 'page' not in st.session_state:
+    st.session_state.page = "Welcome"
 
 # ==========================================
 # PAGE 1: SIMPLE WELCOME PAGE
 # ==========================================
-if page == "Welcome":
+if st.session_state.page == "Welcome":
     st.title("🚦 AI Smart Traffic Controller")
     st.write("Real-time traffic density optimization and emergency vehicle detection prototype using YOLOv8.")
     
     st.divider()
     
-    st.info("👉 Click on **'Test Prototype'** in the sidebar to upload a video and run the live simulation.")
+    # Screen par direct button
+    if st.button("👉 Test Prototype", type="primary", use_container_width=True):
+        st.session_state.page = "Test Prototype"
+        st.rerun()
 
 # ==========================================
 # PAGE 2: TEST PROTOTYPE (LIVE SIMULATION)
 # ==========================================
-elif page == "Test Prototype":
+elif st.session_state.page == "Test Prototype":
+    if st.button("⬅️ Back to Home"):
+        st.session_state.page = "Welcome"
+        st.rerun()
+
     st.title("Test Prototype - Live Traffic Simulation")
 
     @st.cache_resource
